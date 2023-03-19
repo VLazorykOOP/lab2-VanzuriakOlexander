@@ -1,4 +1,3 @@
-#pragma once
 void Examples();
 void Example1();
 void Example2();
