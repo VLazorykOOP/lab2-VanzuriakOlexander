@@ -36,11 +36,11 @@ int task1() {
   return 0;
 }
 
-void MyEncryption(char InS[64], unsigned short OutCoding[64], int row) {
+void MyEncryption(char InS[32], unsigned short OutCoding[32], int row) {
   unsigned char c;
   unsigned short r, t, b;
   short j;
-  for (int i = 0; i < 64; i++) {
+  for (int i = 0; i < 32; i++) {
     r = 0;      // 0000 0000 0000 0000
     c = InS[i]; // s - 0x73 = 0111 0011
     t = c;
@@ -65,17 +65,16 @@ void MyEncryption(char InS[64], unsigned short OutCoding[64], int row) {
   }
 }
 
-int MyDecryption(char OutS[64], unsigned short InCoding[64]) {
+void MyDecryption(char OutS[32], unsigned short InCoding[32]) {
   unsigned char c;
   unsigned short r, t, i, b, p, w;
   short j;
-  for (i = 0; i < 64; i++) //
+  for (i = 0; i < 32; i++) //
   {
     // Перевірка парності
     r = InCoding[i];
-    bitset<16> x(r);
-    cout << x << '\n';
-    t = r & 0b1111011111111111; //  0xf7ff			1111 0111 1111
+
+    t = r & 0b1111111111111111; //  0xf7ff			1111 0111 1111
                                 //  1111
     p = r & 0b0000100000000000; //  0x0800			0000 1000 0000
                                 //  0000
@@ -92,77 +91,94 @@ int MyDecryption(char OutS[64], unsigned short InCoding[64]) {
       w <<= 1;
     }
     p >>= 11;
-    if (p != b)
-      return -i;
-    t = r & 0b1111000000000000; // 0xf000
-    t >>= 12;
-    w = r & 0b0000000000001111; // 0x000f
-    w <<= 4;
+    t = r & 0b1110000000000000; // 0xf000
+    t >>= 13;
+    w = r & 0b0001111000000000; // 0x000f
+    w <<= 3;
     t |= w;
-    p = r & 0b0000011111110000; // 0x07f
-    p >>= 4;
-    OutS[p] = (unsigned char)t;
+    p = r & 0b0000000111111110; // 0x07f
+    p >>= 1;
+    OutS[i] = (unsigned char)p;
   }
-  return 1;
 }
 
 void task2() {
   // Шифрування даних з використання побітових операцій
   // Data encryption using bitwise operations
-  // cout << " Data encryption using bitwise operations  \n";
-  // char S2[4][32] = {'\0'};
-  // unsigned short Rez[32];
-  // unsigned short i, f;
-  // cout << " Input string (size <=64) \n";
-  // for (int i = 0; i < 4; i++) {
-  //   cin >> S2[i];
-  // }
 
-  // for (int i = 0; i < 4; i++) {
+  char choice;
+  cout << " Data encryption using bitwise operations  \n";
+  char S2[4][32] = {'\0'};
+  unsigned short Rez[32];
+  unsigned short i, f;
+  cout << "1. Enter the into bin file \n";
+  cout << "2. Read from bin file \n";
+  cin >> choice;
 
-  //   int n = strlen(S2[i]);
-  //   MyEncryption(S2[i], Rez, i);
-  //   ofstream ofsb("outb.bin", ios::app | ios::binary);
-  //   if (!ofsb) {
-  //     cout << "File outb.bin not open" << endl;
-  //   } else {
-  //     ofsb.write((char*)Rez, 32 * sizeof(unsigned short));
-  //     ofsb.close();
-  //     cout << "Data write to outb.bin " << endl;
-  //   }
-  //   for (int i = 0; i < n; i++) {
-  //     bitset<16> x(Rez[i]);
-  //     cout << x << '\n';
-  //   };
+  switch (choice) {
+  case '1': {
+    cout << " Input string (size <=32) \n";
+    for (int i = 0; i < 4; i++) {
+      cin >> S2[i];
+    }
 
+    ofstream ofsb("outb.bin", ios::app | ios::binary);
+    for (int i = 0; i < 4; i++) {
+      int n = strlen(S2[i]);
+      cout << S2[i] << endl;
+      MyEncryption(S2[i], Rez, i);
+      ofsb.write((char *)Rez, 32 * sizeof(unsigned short));
+      cout << "Data write to outb.bin " << endl;
+      for (int i = 0; i < n; i++) {
+        bitset<16> x(Rez[i]);
+        cout << x << '\n';
+      };
 
-  //   cout << endl;
-  // }
+      for (int i = 0; i < 32; i++) {
+        Rez[i] = '\0';
+      }
 
-  char S[65];
-  unsigned short InBin[64]{};
-  ofstream ofs("out.txt");
-  if (!ofs) {
-    cout << "File out.txt not open" << endl;
-    return;
+      cout << endl;
+    }
+    ofsb.close();
+    break;
   }
-  ifstream ifsb("outb.bin", ios::in | ios::binary);
-  if (!ifsb) {
-    cout << "File outb.bin not open" << endl;
-    return;
-  }
-  ifsb.read((char *)InBin, 64 * sizeof(unsigned short));
-  ifsb.close();
-  cout << "Data read from outb.bin " << endl;
+  case '2': {
+    char S[32]{'\0'};
+    ofstream ofs("out.txt");
+    if (!ofs) {
+      cout << "File out.txt not open" << endl;
+      return;
+    }
+    ifstream ifsb("outb.bin", ios::in | ios::binary);
+    if (!ifsb) {
+      cout << "File outb.bin not open" << endl;
+      return;
+    }
+    for (int i = 0; i < 4; i++) {
+      unsigned short InBin[32]{'\0'};
+      if (i) {
+        ifsb.seekg(64 * i);
+      }
+      ifsb.read((char *)InBin, 32 * sizeof(unsigned short));
+      cout << "Data read from outb.bin " << endl;
 
-  int r;
-  r = MyDecryption(S, InBin);
-  if (r < 1) {
-    cout << "Error  read  " << r << " row " << endl;
+      MyDecryption(S, InBin);
+      cout << "String  " << S << endl;
+      ofs << S << endl;
+    }
+    ifsb.close();
+    break;
   }
-  cout << "String  " << S << endl;
-  ofs << S << endl;
+  default:
+    break;
+  }
 }
+
+//   1          2        3       4
+// 01001111 01111011 10000000 01000000 01000000 01000000 01000000 01000000
+// 01000000
+//                    0        1        1        1        1        0         1 1
 
 void task3() {
   // Шифрування даних з використання стуктур з бітовими полями
